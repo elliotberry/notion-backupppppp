@@ -2,7 +2,6 @@
 
 const axios = require('axios');
 const extract = require('extract-zip');
-const { retry } = require('async');
 const { createWriteStream } = require('fs');
 const { mkdir, rm, readdir } = require('fs/promises');
 const { join } = require('path');
@@ -49,7 +48,7 @@ async function sleep(seconds) {
 async function getExportURL(startTime) {
   while (true) {
     await sleep(10);
-    let payload = {
+    const payload = {
       spaceId: NOTION_SPACE_ID,
       size: 20,
       type: "unread_and_read",
@@ -57,25 +56,25 @@ async function getExportURL(startTime) {
     };
 
     let { data } = await post('getNotificationLogV2', payload);
-    let activities = Object.values(data.recordMap.activity || {});
+    const activities = Object.values(data.recordMap.activity || {});
 
     console.log(`🔍 Found ${activities.length} activities. Logging timestamps:`);
     activities.forEach(activity => {
-      let timestamp = activity.value?.value?.start_time;
+      const timestamp = activity.value?.value?.start_time;
       if (timestamp) {
-        let elapsedTime = (timestamp - startTime) / 1000;
+        const elapsedTime = (timestamp - startTime) / 1000;
         console.log(`🔹 Activity type: ${activity.value?.value?.type}, Timestamp: ${timestamp}, Time since start: ${elapsedTime}s`);
       }
     });
 
-    let exportActivity = activities.find(activity =>
+    const exportActivity = activities.find(activity =>
       activity.value?.value?.type === 'export-completed' &&
       activity.value?.value?.start_time >= startTime
     );
 
     if (exportActivity) {
-      let timestamp = exportActivity.value.value.start_time;
-      let exportURL = exportActivity.value.value.edits[0].link;
+      const timestamp = exportActivity.value.value.start_time;
+      const exportURL = exportActivity.value.value.edits[0].link;
       console.warn(`✅ Export URL found: ${exportURL}`);
       console.warn(`🕒 Export timestamp: ${timestamp}, Time since start: ${(timestamp - startTime) / 1000}s`);
       return exportURL;
@@ -87,7 +86,7 @@ async function getExportURL(startTime) {
 async function exportFromNotion(format) {
   try {
     console.log(`📤 Initiating export for format: ${format}`);
-    let startTime = Date.now();
+    const startTime = Date.now();
     await post('enqueueTask', {
       task: {
         eventName: 'exportSpace',
@@ -103,9 +102,9 @@ async function exportFromNotion(format) {
       },
     });
 
-    let exportURL = await getExportURL(startTime);
+    const exportURL = await getExportURL(startTime);
     console.log(`📥 Downloading export from ${exportURL}`);
-    let res = await client({
+    const res = await client({
       method: 'GET',
       url: exportURL,
       responseType: 'stream',
@@ -118,8 +117,8 @@ async function exportFromNotion(format) {
         'Sec-Fetch-Dest': 'empty'
       }
     });
-    let filePath = join(process.cwd(), `${format}.zip`);
-    let stream = res.data.pipe(createWriteStream(filePath));
+    const filePath = join(process.cwd(), `${format}.zip`);
+    const stream = res.data.pipe(createWriteStream(filePath));
 
     await new Promise((resolve, reject) => {
       stream.on('close', resolve);
@@ -132,11 +131,11 @@ async function exportFromNotion(format) {
 }
 
 async function run() {
-  let cwd = process.cwd(),
-    mdDir = join(cwd, 'markdown'),
-    mdFile = join(cwd, 'markdown.zip'),
-    htmlDir = join(cwd, 'html'),
-    htmlFile = join(cwd, 'html.zip');
+  const cwd = process.cwd();
+  const mdDir = join(cwd, 'markdown');
+  const mdFile = join(cwd, 'markdown.zip');
+  const htmlDir = join(cwd, 'html');
+  const htmlFile = join(cwd, 'html.zip');
 
   console.log('🗑️ Removing old backups...');
   await rm(mdDir, { recursive: true, force: true });
@@ -163,8 +162,8 @@ async function run() {
 }
 
 async function extractInnerZip(dir) {
-  let files = (await readdir(dir)).filter(fn => /Part-\d+\.zip$/i.test(fn));
-  for (let file of files) {
+  const files = (await readdir(dir)).filter(fn => /Part-\d+\.zip$/i.test(fn));
+  for (const file of files) {
     await extract(join(dir, file), { dir });
   }
 }

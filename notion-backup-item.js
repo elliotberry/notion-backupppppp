@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 
-let { program } = require('commander')
-  , { writeFileSync, mkdirSync } = require('fs')
-  , { join, isAbsolute, dirname } = require('path')
-  , { NotionAPI } = require('notion-client')
-  , { parsePageId } = require('notion-utils')
-  , { NOTION_TOKEN } = process.env
-  , nc = new NotionAPI({ authToken: NOTION_TOKEN })
-  , die = (str) => {
-      console.error(str);
-      process.exit(1);
-    }
-;
+let { program } = require('commander');
+let { writeFileSync, mkdirSync } = require('fs');
+let { join, isAbsolute, dirname } = require('path');
+let { NotionAPI } = require('notion-client');
+let { parsePageId } = require('notion-utils');
+let { NOTION_TOKEN } = process.env;
+const nc = new NotionAPI({ authToken: NOTION_TOKEN });
+const die = (str) => {
+  console.error(str);
+  process.exit(1);
+};
 
 // --version
 program.version(require('./package.json').version);
@@ -27,9 +26,8 @@ program
 program.parse(process.argv);
 
 async function run () {
-  let { id, collection, view, out } = program.opts()
-    , refPage
-  ;
+  let { id, collection, view, out } = program.opts();
+  let refPage;
   if (collection) {
     if (!view) die('The --collection option requires --view to also be specified.');
     if (id) console.warn('Warning: --id will be ignored.');
@@ -40,12 +38,13 @@ async function run () {
     refPage = await nc.getPage(parsePageId(id));
   }
   else die('Must specify one of --id or --collection/--view.');
-  let json = JSON.stringify(refPage, null, 2);
+  const json = JSON.stringify(refPage, null, 2);
   if (out) {
-    let file = isAbsolute(out) ? out : join(process.cwd(), out);
+    const file = isAbsolute(out) ? out : join(process.cwd(), out);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, json);
+    return;
   }
-  else process.stdout.write(json);
+  process.stdout.write(json);
 }
 run();
