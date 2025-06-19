@@ -6,7 +6,8 @@ const { retry } = require('async');
 const { createWriteStream } = require('fs');
 const { mkdir, rm, readdir } = require('fs/promises');
 const { join } = require('path');
-
+const dotenv = require('dotenv');
+dotenv.config();
 const NOTION_API = 'https://www.notion.so/api/v3';
 const { NOTION_TOKEN, NOTION_FILE_TOKEN, NOTION_SPACE_ID } = process.env;
 
